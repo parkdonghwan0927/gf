@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gf.example.mapper.SurveyMapper">
+	<select id="selectSurveyListAll" resultType="Survey">
+	      SELECT         s_no as sNo,
+	      				 s_title as sTitle,
+	      				 s_master as sMaster,
+	      				 s_datetime as sDatetime
+	      FROM           gf_survey
+	      ORDER BY 		 s_datetime
+	 </select>
+	 
+	 <select id="selectSurveyList" resultType="Survey">
+	      SELECT         s_no as sNo,
+	      				 s_title as sTitle,
+	      				 s_master as sMaster,
+	      				 s_datetime as sDatetime
+	      FROM           gf_survey
+	      WHERE			 s_master = #{uNo}
+	      ORDER BY 		 s_datetime
+	 </select>
+	 
+	 <insert id="saveSurvey">
+	 	  INSERT into	 gf_survey(s_title, s_master)
+	 	  VALUES		 (#{sTitle}, #{sMaster})				
+	 </insert>
+	 
+	 <insert id="saveQuestion">
+	 	  INSERT into	 gf_question(q_content, q_kind, q_index, q_master)
+	 	  VALUES		
+	 	  <foreach collection="itemlist" item="item" index="index" separator=" , ">
+            			(#{item.question.qContent}, #{item.question.qKind}, #{index},
+            			 (SELECT      s_no 
+						  FROM        gf_survey
+						  ORDER BY 	  s_no DESC
+						  LIMIT 1)
+            			)
+          </foreach>				
+	 </insert>
+	 
+	 <insert id="saveExample">
+	 	  INSERT into	 gf_example(e_content, e_index, e_master)
+	 	  VALUES		
+	 	  <foreach collection="itemlist" item="item" index="index" separator=" , ">
+	 	  	<choose>
+	 	  		<when test="item.examplelist != null">
+		 	  		<foreach collection="item.examplelist" item="example" separator=" , ">
+			  			(#{example.eContent}, #{index},
+			  			(SELECT      s_no 
+						  FROM        gf_survey
+						  ORDER BY 	  s_no DESC
+						  LIMIT 1)			  			
+			  			)	
+		      		</foreach>
+	 	  		</when>
+	 	  	</choose>	
+          </foreach>				
+	 </insert>
+	 
+	 <insert id="saveAnswerNum">
+	 	  INSERT into	 gf_answernum(a_master, a_kind, a_content, a_index, a_writer)
+	 	  VALUES		
+	 	  <foreach collection="answernumlist" item="answernum" separator=" , ">
+			  			(#{answernum.aMaster}, #{answernum.aKind}, #{answernum.aContent}, #{answernum.aIndex}, #{answernum.aWriter})	
+		  </foreach>
+	</insert>
+	
+	<insert id="saveAnswerString">
+	 	  INSERT into	 gf_answerstring(a_master, a_kind, a_content, a_index, a_writer)
+	 	  VALUES		
+	 	  <foreach collection="answerstringlist" item="answerstring" separator=" , ">
+			  			(#{answerstring.aMaster}, #{answerstring.aKind}, #{answerstring.aContent}, #{answerstring.aIndex}, #{answerstring.aWriter})	
+		  </foreach>
+	</insert>
+	 
+	 <select id="getSurvey" resultType="Survey">
+	      SELECT         s_no as sNo,
+	      				 s_title as sTitle,
+	      				 s_master as sMaster,
+	      				 s_datetime as sDatetime
+	      FROM           gf_survey
+	      WHERE			 s_no = #{sNo}
+	 </select>
+	 
+	 <select id="getQuestion" resultType="Question">
+	      SELECT         q_no as qNo,
+	      				 q_content as qContent,
+	      				 q_master as qMaster,
+	      				 q_kind as qKind,
+	      				 q_index as qIndex
+	      FROM           gf_question
+	      WHERE			 q_master = #{sNo}
+	 </select>
+	 
+	 <select id="getExample" resultType="Example">
+	      SELECT         e_no as eNo,
+	      				 e_content as eContent,
+	      				 e_master as eMaster,
+	      				 e_index as eIndex
+	      FROM           gf_example
+	      WHERE			 e_master = #{sNo}
+	 </select>
+	 
+	  <delete id="deleteQuestion">
+	      DELETE FROM	 gf_question
+	      WHERE			 q_master = #{qMaster}
+	      AND			 q_index = #{qIndex}
+	  </delete>
+	  
+	  <delete id="deleteExampleWithQuestion">
+	      DELETE FROM	 gf_example
+	      WHERE			 e_master = #{qMaster}
+	      AND			 e_index = #{qIndex}
+	 </delete>
+	 
+	 <delete id="deleteExample">
+	      DELETE FROM	 gf_example
+	      WHERE			 e_no = #{eNo}
+	 </delete>
+	 
+	 <delete id="deleteSurvey">
+	      DELETE FROM	 gf_survey
+	      WHERE			 s_no = #{sNo}
+	 </delete>
+	 
+	 <delete id="deleteQuestionWithSurvey">
+	      DELETE FROM	 gf_question
+	      WHERE			 q_master = #{sNo}
+	 </delete>
+	 
+	 <delete id="deleteExampleWithSurvey">
+	      DELETE FROM	 gf_example
+	      WHERE			 e_master = #{sNo}
+	 </delete>
+	 
+	 <select id="getResultNum" resultType="Result">
+	      SELECT		 a_index AS rIndex,
+						 a_kind AS rKind,
+						 a_writer AS rWriter,
+						 q_content AS rQuestion,
+						 e_content AS rExample1,
+						 u_name AS rWriterName,
+						 COUNT(a_content) rCount				
+		  FROM			 gf_answernum ta
+		  LEFT JOIN 	 gf_example tb
+		  ON 			 ta.a_content = tb.e_no
+		  LEFT JOIN 	 gf_question tc
+		  ON 			 (ta.a_index = tc.q_index AND ta.a_master = tc.q_master)
+		  LEFT JOIN 	 gf_user td
+		  ON 			 ta.a_writer = td.u_no
+		  WHERE 		 1=1
+		  AND 			 a_master = #{sNo}
+		  GROUP BY 	     a_content
+	 </select>
+	 
+	 <select id="getResultString" resultType="Result">
+	      SELECT		 a_index AS rIndex,
+						 a_kind AS rKind,
+						 a_writer AS rWriter,
+						 q_content AS rQuestion,
+						 a_content AS rExample2,
+						 u_name AS rWriterName
+		  FROM			 gf_answerstring ta
+		  LEFT JOIN 	 gf_example tb
+		  ON 			 ta.a_content = tb.e_no
+		  LEFT JOIN 	 gf_question tc
+		  ON 			 (ta.a_index = tc.q_index AND ta.a_master = tc.q_master)
+		  LEFT JOIN 	 gf_user td
+		  ON 			 ta.a_writer = td.u_no
+		  WHERE 		 1=1
+		  AND 			 a_master = #{sNo}
+	 </select>
+	 
+	 <select id="getResultNum2" resultType="Result">
+	      SELECT		 a_index AS rIndex,
+						 a_kind AS rKind,
+						 a_writer AS rWriter,
+						 q_content AS rQuestion,
+						 e_content AS rExample1,
+						 u_name AS rWriterName
+		  FROM			 gf_answernum ta
+		  LEFT JOIN 	 gf_example tb
+		  ON 			 ta.a_content = tb.e_no
+		  LEFT JOIN 	 gf_question tc
+		  ON 			 (ta.a_index = tc.q_index AND ta.a_master = tc.q_master)
+		  LEFT JOIN 	 gf_user td
+		  ON 			 ta.a_writer = td.u_no
+		  WHERE 		 1=1
+		  AND 			 a_master = #{sNo}
+		  AND 			 a_writer = #{sMaster}
+	 </select>
+	 
+	 <select id="getResultString2" resultType="Result">
+	      SELECT		 a_index AS rIndex,
+						 a_kind AS rKind,
+						 a_writer AS rWriter,
+						 q_content AS rQuestion,
+						 a_content AS rExample2,
+						 u_name AS rWriterName		 
+		  FROM			 gf_answerstring ta
+		  LEFT JOIN 	 gf_question tb
+		  ON 			 (ta.a_index = tb.q_index AND ta.a_master = tb.q_master)
+		  LEFT JOIN 	 gf_user td
+		  ON 			 ta.a_writer = td.u_no
+		  WHERE 		 1=1
+		  AND 			 a_master = #{sNo}
+		  AND 			 a_writer = #{sMaster}
+	 </select>
+	 
+</mapper>
+
