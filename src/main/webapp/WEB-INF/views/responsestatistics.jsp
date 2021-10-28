@@ -7,62 +7,14 @@
 <head>
 <meta charset="UTF-8">
 <title>Insert title here</title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <style>
 div {
   border: 1px solid black;
 }
 </style>
  <!--Load the AJAX API-->
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">
 
-      // Load the Visualization API and the corechart package.
-      google.charts.load('current', {'packages':['corechart']});
-
-      // Set a callback to run when the Google Visualization API is loaded.
-      google.charts.setOnLoadCallback(drawChart);
-
-      // Callback that creates and populates a data table,
-      // instantiates the pie chart, passes in the data and
-      // draws it.
-      function drawChart() {
-
-        // Create the data table.
-        var data = new google.visualization.DataTable();
-        data.addColumn('string', 'Topping');
-        data.addColumn('number', 'Slices');
-        data.addRows([
-          ['Mushrooms', 3],
-          ['Onions', 1],
-          ['Olives', 1],
-          ['Zucchini', 1],
-          ['Pepperoni', 2]
-        ]);
-        
-        var data2 = new google.visualization.DataTable();
-        data2.addColumn('string', 'Topping');
-        data2.addColumn('number', 'Slices');
-        data2.addRows([
-          ['2Mushrooms', 2],
-          ['2Onions', 2],
-          ['2Olives', 2],
-          ['2Zucchini', 2],
-          ['22Pepperoni', 2]
-        ]);
-
-        // Set chart options
-        var options = {'title':'How Much Pizza I Ate Last Night',
-                       'width':400,
-                       'height':300};
-
-        // Instantiate and draw our chart, passing in some options.
-        var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
-        chart.draw(data, options);
-        
-        var chart2 = new google.visualization.PieChart(document.getElementById('chart_div2'));
-        chart2.draw(data2, options);
-      }
-    </script>
 </head>
 <body>
 	<h1>${survey.sTitle}</h1>
@@ -82,9 +34,81 @@ div {
 					</c:choose>
 				</c:if>
 			</c:forEach>
+			<div id="chart_div"></div>
 		</div>
+		
 	</c:forEach>
-	<div id="chart_div"></div>
-	<div id="chart_div2"></div>
+	
+	
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+
+  // Load the Visualization API and the corechart package.
+  google.charts.load('current', {'packages':['corechart']});
+
+  // Set a callback to run when the Google Visualization API is loaded.
+  google.charts.setOnLoadCallback(drawChart);
+
+  // Callback that creates and populates a data table,
+  // instantiates the pie chart, passes in the data and
+  // draws it.
+  function drawChart() {
+	$.ajax({
+		type : "GET",
+		url : "/get/chart/data",
+		data : {
+			sNo : ${survey.sNo}
+		},
+		success: function (data) {
+			data2 = data.slice();
+			
+			let tmp = data2[0].rIndex;
+			for (var i = 1; i < data2.length; i++) {
+				 if(tmp == data2[i].rIndex) {
+					  data2.splice(i, 1);
+					  i--;
+				  } else {
+					  tmp = data2[i].rIndex;
+				  }
+			    }
+			console.dir(data);
+			console.dir(data2);
+			
+			data2.forEach(function(element2, index2, array2) {
+				// Create the data table.
+			    var data2 = new google.visualization.DataTable();
+			    data2.addColumn('string', 'Answer');
+			    data2.addColumn('number', 'Count');
+			    data.forEach(function(element, index, array) {
+			    	console.log(element2.rIndex);
+			    	console.log(element.rIndex);
+			    	console.log('info: ' + element2.rIndex + ' : ' + element.rIndex)
+			    	if(element2.rIndex == element.rIndex) {
+			    		console.log('equals: ' + element2.rIndex + ' : ' + element.rIndex)
+					    data2.addRows([
+					      [element.rExample1, element.rCount]
+					    ]);
+			    		
+			    	}
+			    })
+	
+			    // Set chart options
+			    var options = {'title':'${data.rQuestion}',
+			                   'width':400,
+			                   'height':300};
+	
+			    // Instantiate and draw our chart, passing in some options.
+			    var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+			    chart.draw(data2, options);
+				
+			})
+		}
+	});  
+  }
+</script>
+
+
+
+
 </body>
 </html>
