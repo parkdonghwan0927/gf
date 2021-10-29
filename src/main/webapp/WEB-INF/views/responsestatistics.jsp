@@ -19,7 +19,7 @@ div {
 <body>
 	<h1>${survey.sTitle}</h1>
 		<hr>
-	<c:forEach items="${resultlist}" var="result">
+	<c:forEach items="${resultlist}" var="result" varStatus="status">
 		<div>
 			<p style="font-size:24px; font-family:'돋움'">${result.rQuestion}</p>
 			<c:forEach items="${resultlist2}" var="result2">
@@ -34,7 +34,7 @@ div {
 					</c:choose>
 				</c:if>
 			</c:forEach>
-			<div id="chart_div"></div>
+			<div id="chart_div${status.index}"></div>
 		</div>
 		
 	</c:forEach>
@@ -60,48 +60,33 @@ div {
 			sNo : ${survey.sNo}
 		},
 		success: function (data) {
-			data2 = data.slice();
-			
-			let tmp = data2[0].rIndex;
-			for (var i = 1; i < data2.length; i++) {
-				 if(tmp == data2[i].rIndex) {
-					  data2.splice(i, 1);
-					  i--;
-				  } else {
-					  tmp = data2[i].rIndex;
-				  }
-			    }
+			let index = 0;
+			console.log('getDATA START:');
 			console.dir(data);
-			console.dir(data2);
+			console.log('getDATA END:');
 			
-			data2.forEach(function(element2, index2, array2) {
-				// Create the data table.
+			for(var key in data) {
+			// Create the data table.
 			    var data2 = new google.visualization.DataTable();
 			    data2.addColumn('string', 'Answer');
 			    data2.addColumn('number', 'Count');
-			    data.forEach(function(element, index, array) {
-			    	console.log(element2.rIndex);
-			    	console.log(element.rIndex);
-			    	console.log('info: ' + element2.rIndex + ' : ' + element.rIndex)
-			    	if(element2.rIndex == element.rIndex) {
-			    		console.log('equals: ' + element2.rIndex + ' : ' + element.rIndex)
-					    data2.addRows([
-					      [element.rExample1, element.rCount]
-					    ]);
-			    		
-			    	}
-			    })
+			    
+			    data[key].forEach(function(element, index, array) {
+				    data2.addRows([
+				      [element.rExample1, element.rCount]
+				    ]);
+			    });
 	
 			    // Set chart options
-			    var options = {'title':'${data.rQuestion}',
+			    var options = {'title':'question',
 			                   'width':400,
 			                   'height':300};
 	
 			    // Instantiate and draw our chart, passing in some options.
-			    var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+			    var chart = new google.visualization.PieChart(document.getElementById("chart_div"+ index));
 			    chart.draw(data2, options);
-				
-			})
+			    index++;
+			}
 		}
 	});  
   }

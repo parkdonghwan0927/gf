@@ -58,5 +58,12 @@ public class Result {
 	public void setrExample2(String rExample2) {
 		this.rExample2 = rExample2;
 	}
+	
+	@Override
+	public String toString() {
+		return "Result [rIndex=" + rIndex + ", rWriter=" + rWriter + ", rWriterName=" + rWriterName + ", rKind=" + rKind
+				+ ", rQuestion=" + rQuestion + ", rExample1=" + rExample1 + ", rCount=" + rCount + ", rExample2="
+				+ rExample2 + "]";
+	}
 
 }

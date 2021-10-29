@@ -1,6 +1,8 @@
 package com.gf.example.controller;
 
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -247,10 +249,47 @@ public class Controller {
    
    @RequestMapping("/get/chart/data")
    @ResponseBody
-   public List<Result> getChartData(Model model, Survey survey) { 
+   public HashMap<Integer, ArrayList<Result>> getChartData(Model model, Survey survey) { 
 	   List<Result> resultlist = surveyservice.getResult(survey);
-	 
-       return resultlist;
+	   List<Result> resultlist2 = surveyservice.getResult(survey);
+	   HashMap<Integer, ArrayList<Result>> map = new HashMap<>();
+	   ArrayList<Result> list;
+	   Result result;
+
+	   int tmp = resultlist2.get(0).getrIndex();
+   	   for(int i = 1; i < resultlist2.size(); i++) {	
+		  if(tmp == resultlist2.get(i).getrIndex()) {
+			  resultlist2.remove(i);
+			  i--;
+		  } else {
+			  tmp = resultlist2.get(i).getrIndex();
+		  }	  
+	  }
+   	   
+   	   for(int j = 0; j < resultlist2.size(); j++) {   		
+   		   if(resultlist2.get(j).getrKind().equals("long") || resultlist2.get(j).getrKind().equals("short")) {
+   			   resultlist2.remove(j);
+   			   j--;
+   			   
+   		   }  
+	   }
+
+   	   for(int i = 0; i < resultlist2.size(); i++) {
+   		   list = new ArrayList<>();
+   		   for(int j = 0; j < resultlist.size(); j++) {
+   			   if(resultlist2.get(i).getrIndex() == resultlist.get(j).getrIndex()) {
+   				   result = new Result();   				  
+   				   result.setrCount(resultlist.get(j).getrCount());
+   				   result.setrExample1(resultlist.get(j).getrExample1());
+   				   result.setrIndex(resultlist.get(j).getrIndex());
+   				   list.add(result);
+   			   }
+   		   }
+   		   
+   		   map.put(resultlist2.get(i).getrIndex(), list);   
+   	   }   	   
+   	   	 
+       return map;
    }
 }
 
